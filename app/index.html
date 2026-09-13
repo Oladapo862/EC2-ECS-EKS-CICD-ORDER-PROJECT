@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Order App</title>
+</head>
+<body>
+    <h1>Production Order App</h1>
+
+    <button onclick="createOrder()">Create Order</button>
+
+    <p id="result"></p>
+
+    <script>
+        async function createOrder() {
+            const response = await fetch("/orders", {
+                method: "POST"
+            });
+
+            const data = await response.json();
+
+            document.getElementById("result").textContent =
+                "Order ID: " + data.order_id +
+                " | Status: " + data.status;
+        }
+    </script>
+</body>
+</html>
