@@ -17,19 +17,34 @@ resource "aws_launch_template" "production_app" {
   ]
 
   user_data = base64encode(<<-EOF
-  #!/bin/bash
+    #!/bin/bash
 
-  dnf update -y
+    dnf update -y
 
-  dnf install -y docker
+    dnf install -y docker
 
-  systemctl enable docker
-  systemctl start docker
+    systemctl enable docker
+    systemctl start docker
 
-  mkdir -p /opt/production-app
+    mkdir -p /opt/production-app
 
-  echo "EC2 production server initialized successfully" > /opt/production-app/status.txt
-EOF
+    aws ecr get-login-password --region eu-west-1 | \
+      docker login --username AWS --password-stdin \
+      ${aws_ecr_repository.production_app.repository_url}
+
+    docker pull ${aws_ecr_repository.production_app.repository_url}:latest
+
+    docker stop production-app 2>/dev/null || true
+    docker rm production-app 2>/dev/null || true
+
+    docker run -d \
+      --name production-app \
+      --restart unless-stopped \
+      -p 8000:8000 \
+      ${aws_ecr_repository.production_app.repository_url}:latest
+
+    echo "EC2 production server initialized successfully" > /opt/production-app/status.txt
+  EOF
   )
 
   tag_specifications {
